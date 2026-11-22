@@ -205,6 +205,37 @@ void bounceOnPaddle()
 }
 
 // SAKAINAH
+// FEATURE 5: BREAKING BRICKS 
+const int ROW_SPACING = BRICK_H + BRICK_GAP;               // 20 + 5 = 25 pixels per row
+const int BRICKS_BOTTOM = BRICKS_Y + ROWS * ROW_SPACING;   // brick area ends at y = 300
+const int POINTS_HIT = 10;                                 // hit that does not break the brick
+const int POINTS_BREAK = 50;                               // hit that breaks the brick
+
+/*Takes one corner(cx, cy) of the ball.If it is inside the brick area,
+finds the row and column under it and returns true. Otherwise returns
+false, because the division would give a wrong row.*/ 
+bool cornerToCell(float cx, float cy, int& row, int& col)
+{
+    if (cy < BRICKS_Y || cy >= BRICKS_BOTTOM || cx < 0 || cx >= SCREEN_W)
+        return false;
+
+    row = ((int)cy - BRICKS_Y) / ROW_SPACING;   // integer division
+    col = (int)cx / BRICK_W;
+    return true;
+}
+
+/*Takes one hit off brick[r][c] and gives the points.
+ drawBricks() picks the colour from the number, so the colour changes
+ by itself, and at 0 the brick is not drawn.*/ 
+void damageBrick(int r, int c)
+{
+    bricks[r][c] = bricks[r][c] - 1;
+
+    if (bricks[r][c] == 0)
+        score = score + POINTS_BREAK;   // this hit broke the brick
+    else
+        score = score + POINTS_HIT;     // brick is still there
+}
 void hitBricks()
 {
     // TODO
