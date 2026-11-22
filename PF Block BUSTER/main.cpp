@@ -17,11 +17,11 @@ const int BRICKS_Y = 100;   // where the first row of bricks starts (from the to
 const int BRICK_GAP = 5;    // small gap: row spacing = 20 + 5 = 25
 
 const int PADDLE_W = 100;
-const int PADDLE_H = 15;
+const int PADDLE_H = 14;
 const int PADDLE_SPEED = 8;
 
-const int BALL_SIZE = 10;
-const int HUD_H = 40;
+const int BALL_SIZE = 12;
+const int HUD_H = 50;
 
 //GAME STATES--const int MENU = 0;
 const int MENU = 0;
