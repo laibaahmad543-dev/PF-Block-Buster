@@ -55,13 +55,13 @@ void handleInput();
 void updateGame();
 void drawGame(sf::RenderWindow& window);
 
-// SAK'S FUNCTIONS
+// LAIBA'S FUNCTIONS
 void movePaddle(int direction);
 void launchBall();
 void moveBall();
 void bounceOnPaddle();
 
-// LAIBA'S FUNCTIONS
+// SAKAINAH'S FUNCTIONS
 void hitBricks();
 void saveGame();
 bool loadGame();
@@ -182,7 +182,7 @@ void drawGame(sf::RenderWindow& window)
     window.display();                 // show it on the screen
 }
 
-// SAK 
+// LAIBA 
 void movePaddle(int direction)
 {
     (void)direction;
@@ -204,7 +204,7 @@ void bounceOnPaddle()
     // TODO
 }
 
-// LAIBA 
+// SAKAINAH
 void hitBricks()
 {
     // TODO
