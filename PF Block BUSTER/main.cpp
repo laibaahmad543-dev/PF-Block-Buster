@@ -201,13 +201,33 @@ void drawGame(sf::RenderWindow& window)
 // LAIBA 
 void movePaddle(int direction)
 {
-    (void)direction;
-    // TODO
+    if (direction == 1)
+    {
+        paddleX += PADDLE_SPEED;
+    }
+    else if (direction == -1)
+    {
+        paddleX -= PADDLE_SPEED;
+    }
+
+    if (paddleX > SCREEN_W - PADDLE_W)
+    {
+        paddleX = SCREEN_W - PADDLE_W;
+    }
+
+    if (paddleX < 0)
+    {
+        paddleX = 0;
+    }
 }
 
 void launchBall()
 {
-    // TODO
+    ballX = paddleX + PADDLE_W / 2.0f - BALL_SIZE / 2.0f;
+    ballY = 650.0f - BALL_SIZE;
+
+    dx = 3.0f;
+    dy = -4.0f;
 }
 
 void moveBall()
