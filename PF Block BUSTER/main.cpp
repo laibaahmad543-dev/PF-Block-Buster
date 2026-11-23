@@ -179,6 +179,22 @@ void drawGame(sf::RenderWindow& window)
     drawBricks(window);               // draw the new one
     // TODO: draw HUD, paddle, ball here
 
+    sf::RectangleShape paddle(sf::Vector2f(PADDLE_W, PADDLE_H)); // setting shape as rectangle 
+
+    paddle.setPosition(sf::Vector2f(paddleX, 650.f)); // setting position to be in the middle 
+
+    paddle.setFillColor(sf::Color::Cyan); // setting colour as cyan
+
+    window.draw(paddle);
+
+    sf::CircleShape ball(BALL_SIZE / 2.0f); // balll shaped as a circle 
+
+    ball.setPosition(sf::Vector2f(paddleX + PADDLE_W / 2.0f - BALL_SIZE / 2.0f, 650.f - BALL_SIZE
+    )); // setting position on top of paddle in the middle 
+
+    ball.setFillColor(sf::Color::White); // setting colour as white 
+
+    window.draw(ball);
     window.display();                 // show it on the screen
 }
 
