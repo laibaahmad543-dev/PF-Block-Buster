@@ -41,6 +41,12 @@ float paddleX = 0;
 int score = 0;
 int lives = 3;
 int gameState = MENU;
+sf::Color colors[4] = {
+    sf::Color(25, 25, 45),   // 0: no brick
+    sf::Color::Green,        // 1: one hit left
+    sf::Color::Yellow,       // 2: two hits left
+    sf::Color::Red           // 3: three hits left
+};
 
 bool levelLoaded = false;         // true if level.txt was read correctly
 string levelError = "";           // the error message if it was not
@@ -48,7 +54,7 @@ sf::Font font;                    // the font used to write text
 bool fontLoaded = false;          // true if the font was found
 
 // ================= FUNCTION DECLARATIONS =================
-// YOUR FUNCTIONS
+// Maryam's FUNCTIONS
 void loadLevel();
 void drawBricks(sf::RenderWindow& window);
 void handleInput();
@@ -107,6 +113,8 @@ void loadLevel()
         for (int c = 0; c < COLS; c++)
         {
             fin >> bricks[r][c];
+            if (bricks[r][c] < 0 || bricks[r][c] > 3)  
+                bricks[r][c] = 0;
         }
     }
 
@@ -119,8 +127,8 @@ void drawBricks(sf::RenderWindow& window)
     // If loading failed, show a red box with the error and stop
     if (!levelLoaded)
     {
-        sf::RectangleShape box(sf::Vector2f((float)SCREEN_W, 60.0f));
-        box.setPosition(sf::Vector2f(0.0f, 300.0f));
+        sf::RectangleShape box({ (float)SCREEN_W, 60.f });
+        box.setPosition({ 0.f, 300.f });
         box.setFillColor(sf::Color(150, 0, 0));
         window.draw(box);
 
@@ -128,13 +136,15 @@ void drawBricks(sf::RenderWindow& window)
         {
             sf::Text message(font, levelError, 24);
             message.setFillColor(sf::Color::White);
-            message.setPosition(sf::Vector2f(20.0f, 315.0f));
+            message.setPosition({ 20.f, 315.f });
             window.draw(message);
         }
         return;
     }
 
-    // Go through every row and every column
+    // Smaller than the cell, so a gap shows between bricks
+    sf::RectangleShape brick(sf::Vector2f((float)(BRICK_W - 2), (float)BRICK_H));
+
     for (int r = 0; r < ROWS; r++)
     {
         for (int c = 0; c < COLS; c++)
@@ -142,21 +152,9 @@ void drawBricks(sf::RenderWindow& window)
             if (bricks[r][c] == 0)
                 continue;   // 0 means no brick, skip it
 
-            // One brick: 58 wide (leaves a gap), 20 tall
-            sf::RectangleShape brick(sf::Vector2f((float)(BRICK_W - 2), (float)BRICK_H));
-
-            // Position: x = column * 60, y = 100 + row * 25
-            brick.setPosition(sf::Vector2f((float)(c * BRICK_W),
+            brick.setFillColor(colors[bricks[r][c]]);
+            brick.setPosition(sf::Vector2f((float)(c * BRICK_W + 1),
                 (float)(BRICKS_Y + r * (BRICK_H + BRICK_GAP))));
-
-            // Colour depends on hits left
-            if (bricks[r][c] == 1)
-                brick.setFillColor(sf::Color::Green);
-            else if (bricks[r][c] == 2)
-                brick.setFillColor(sf::Color::Yellow);
-            else
-                brick.setFillColor(sf::Color::Red);
-
             window.draw(brick);
         }
     }
@@ -179,7 +177,7 @@ void drawGame(sf::RenderWindow& window)
     drawBricks(window);               // draw the new one
     // TODO: draw HUD, paddle, ball here
 
-    sf::RectangleShape paddle(sf::Vector2f(PADDLE_W, PADDLE_H)); // setting shape as rectangle 
+    sf::RectangleShape paddle(sf::Vector2f((float)PADDLE_W, (float)PADDLE_H)); // setting shape as rectangle 
 
     paddle.setPosition(sf::Vector2f(paddleX, 650.f)); // setting position to be in the middle 
 
