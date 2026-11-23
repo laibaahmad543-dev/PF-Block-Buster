@@ -68,7 +68,7 @@ void moveBall();
 void bounceOnPaddle();
 
 // SAKAINAH'S FUNCTIONS
-void hitBricks();
+bool hitBricks();
 void saveGame();
 bool loadGame();
 void clearSave();
@@ -270,9 +270,46 @@ void damageBrick(int r, int c)
     else
         score = score + POINTS_HIT;     // brick is still there
 }
-void hitBricks()
+// checks the 4 corners of the ball and hits the bricks they touch
+// returns true if any brick was hit
+bool hitBricks()
 {
-    // TODO
+    // x and y of the 4 corners
+    float cx[4] = { ballX, ballX + BALL_SIZE - 1, ballX, ballX + BALL_SIZE - 1 };
+    float cy[4] = { ballY, ballY, ballY + BALL_SIZE - 1, ballY + BALL_SIZE - 1 };
+
+    // to remember which bricks got hit already
+    int hitR[4], hitC[4];
+    int count = 0;
+
+    for (int i = 0; i < 4; i++)
+    {
+        int r, c;
+
+        if (!cornerToCell(cx[i], cy[i], r, c))   // corner not on the bricks
+            continue;
+
+        if (bricks[r][c] == 0)   // empty spot
+            continue;
+
+        // if 2 corners are on the same brick only hit it once
+        bool same = false;
+        for (int j = 0; j < count; j++)
+        {
+            if (hitR[j] == r && hitC[j] == c)
+                same = true;
+        }
+        if (same)
+            continue;
+
+        hitR[count] = r;
+        hitC[count] = c;
+        count++;
+
+        damageBrick(r, c);
+    }
+
+    return count > 0;
 }
 
 void saveGame()
