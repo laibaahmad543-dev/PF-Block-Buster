@@ -230,7 +230,32 @@ void launchBall()
 
 void moveBall()
 {
-    // TODO
+    void moveBall()
+    {
+        ballX += dx;
+        ballY += dy;
+
+        
+        if (ballX + BALL_SIZE >= SCREEN_W && dx > 0)
+        {
+            ballX = SCREEN_W - BALL_SIZE;
+            dx = -dx;
+        }
+
+        // Left wall
+        if (ballX <= 0 && dx < 0)
+        {
+            ballX = 0;
+            dx = -dx;
+        }
+
+        // Top wall
+        if (ballY <= HUD_H && dy < 0)
+        {
+            ballY = HUD_H;
+            dy = -dy;
+        }
+    }
 }
 
 void bounceOnPaddle()
