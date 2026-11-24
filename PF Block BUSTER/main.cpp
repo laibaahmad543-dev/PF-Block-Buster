@@ -229,9 +229,6 @@ void launchBall()
     dx = 3.0f;
     dy = -4.0f;
 }
-
-void moveBall()
-{
     void moveBall()
     {
         ballX += dx;
