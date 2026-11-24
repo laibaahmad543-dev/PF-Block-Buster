@@ -69,6 +69,8 @@ void bounceOnPaddle();
 
 // SAKAINAH'S FUNCTIONS
 bool hitBricks();
+void checkBricksAfterXStep();
+void checkBricksAfterYStep();
 void saveGame();
 bool loadGame();
 void clearSave();
@@ -336,6 +338,25 @@ bool hitBricks()
 
     return count > 0;
 }
+// after x move - if it hit a brick go back and bounce
+void checkBricksAfterXStep()
+{
+    if (hitBricks())
+    {
+        ballX -= dx;
+        dx = -dx;
+    }
+}
+
+// after y move - same thing but up/down
+void checkBricksAfterYStep()
+{
+    if (hitBricks())
+    {
+        ballY -= dy;
+        dy = -dy;
+    }
+}
 
 void saveGame()
 {
@@ -356,7 +377,7 @@ void clearSave()
 
 int main()
 {
-    // Make the window: 600 wide, 700 tall, with a title
+    // Making window: 600 wide, 700 tall, with a title
     sf::RenderWindow window(
         sf::VideoMode({ SCREEN_W, SCREEN_H }),
         "Block Buster"
