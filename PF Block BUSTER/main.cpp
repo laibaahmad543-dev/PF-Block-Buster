@@ -576,9 +576,36 @@ void checkBricksAfterYStep()
     }
 }
 
+// FEATURE 8: SAVE AND CONTINUE
+const char SAVE_FILE[] = "savegame.txt";
+
+// saves score, lives and all the bricks to savegame.txt
+// paddle and ball dont get saved
 void saveGame()
 {
-    // TODO
+    ofstream fout(SAVE_FILE);
+    if (!fout)
+    {
+		return;   // could not open the file, but no crash
+    }
+
+    fout << score << " " << lives << "\n";   // first line
+
+    // after, 8 rows of 10 bricks
+    for (int r = 0; r < ROWS; r++)
+    {
+        for (int c = 0; c < COLS; c++)
+        {
+            fout << bricks[r][c];
+            if (c < COLS - 1)
+            {
+                fout << " ";   // no space after the last one
+            }
+        }
+        fout << "\n";
+    }
+
+    fout.close();
 }
 
 bool loadGame()
