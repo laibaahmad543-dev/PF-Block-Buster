@@ -272,7 +272,11 @@ void handleInput()
 
 void updateGame()
 {
-   //todo
+    if (gameState == PLAYING && ballLaunched)
+    {
+        moveBall();
+        bounceOnPaddle();
+    }
 }
 
 // Draws one line of text, centred left to right, at height y
@@ -417,7 +421,34 @@ void moveBall()
 
 void bounceOnPaddle()
 {
-    // TODO
+    if (dy > 0 &&
+        ballY + BALL_SIZE >= 650 &&
+        ballY + BALL_SIZE - dy <= 650 &&
+        ballX + BALL_SIZE >= paddleX &&
+        ballX <= paddleX + PADDLE_W)
+    {
+        ballY = 650 - BALL_SIZE;
+        dy = -dy;
+
+        float hitPosition = ballX + BALL_SIZE / 2.0f - paddleX;
+
+        if (hitPosition < PADDLE_W / 4.0f)
+        {
+            dx = -5.0f;
+        }
+        else if (hitPosition < PADDLE_W / 2.0f)
+        {
+            dx = -2.0f;
+        }
+        else if (hitPosition < 3.0f * PADDLE_W / 4.0f)
+        {
+            dx = 2.0f;
+        }
+        else
+        {
+            dx = 5.0f;
+        }
+    }
 }
 
 // SAKAINAH
@@ -535,7 +566,7 @@ int main()
     // Making window: 600 wide, 700 tall, with a title
     sf::RenderWindow window(
         sf::VideoMode({ SCREEN_W, SCREEN_H }),
-        "Block Buster"
+        "Block Buster Test"
     );
     window.setFramerateLimit(60);   // at most 60 turns per second
 
