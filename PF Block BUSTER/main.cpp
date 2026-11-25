@@ -64,7 +64,7 @@ string levelError = "";           // the error message if it was not
 sf::Font font;                    // the font used to write text
 bool fontLoaded = false;          // true if the font was found
 
-// ================= FUNCTION DECLARATIONS =================
+//  FUNCTION DECLARATIONS 
 // Maryam's FUNCTIONS
 void loadLevel();
 void drawBricks(sf::RenderWindow& window);
