@@ -62,7 +62,10 @@ sf::Color colors[4] = {
 bool levelLoaded = false;         // true if level.txt was read correctly
 string levelError = "";           // the error message if it was not
 sf::Font font;                    // the font used to write text
-bool fontLoaded = false;          // true if the font was found
+bool fontLoaded = false;         // true if the font was found
+
+sf::Texture backgroundTexture;
+bool backgroundLoaded = false;
 
 // ================= FUNCTION DECLARATIONS =================
 // Maryam's FUNCTIONS
@@ -157,7 +160,14 @@ void drawBricks(sf::RenderWindow& window)
 
     // Smaller than the cell, so a gap shows between bricks
     sf::RectangleShape brick(sf::Vector2f((float)(BRICK_W - 2), (float)BRICK_H));
+    brick.setOutlineThickness(-1.5f);
+    brick.setOutlineColor(sf::Color(20, 20, 20));
 
+    sf::RectangleShape highlight({ 54.f, 2.f });
+    highlight.setFillColor(sf::Color(255, 255, 255, 130));
+
+    sf::RectangleShape shadow({ 54.f, 2.f });
+    shadow.setFillColor(sf::Color(0, 0, 0, 150));
     for (int r = 0; r < ROWS; r++)
     {
         for (int c = 0; c < COLS; c++)
@@ -169,6 +179,18 @@ void drawBricks(sf::RenderWindow& window)
             brick.setPosition(sf::Vector2f((float)(c * BRICK_W + 1),
                 (float)(BRICKS_Y + r * (BRICK_H + BRICK_GAP))));
             window.draw(brick);
+            highlight.setPosition({
+    (float)(c * BRICK_W + 3),
+    (float)(BRICKS_Y + r * (BRICK_H + BRICK_GAP) + 2)
+                });
+
+            shadow.setPosition({
+                (float)(c * BRICK_W + 3),
+                (float)(BRICKS_Y + r * (BRICK_H + BRICK_GAP) + BRICK_H - 4)
+                });
+
+            window.draw(highlight);
+            window.draw(shadow);
         }
     }
 }
@@ -297,7 +319,17 @@ void drawCenteredText(sf::RenderWindow& window, const string& words, float y,
 void drawGame(sf::RenderWindow& window)
 {
     window.clear(sf::Color::Black);   // wipe the old picture
+    if (backgroundLoaded)
+    {
+        sf::Sprite background(backgroundTexture);
 
+        background.setScale({
+            (float)SCREEN_W / backgroundTexture.getSize().x,
+            (float)SCREEN_H / backgroundTexture.getSize().y
+            });
+
+        window.draw(background);
+    }
     switch (gameState)
     {
     case MENU:
@@ -563,13 +595,23 @@ void clearSave()
 
 int main()
 {
+
+
     // Making window: 600 wide, 700 tall, with a title
     sf::RenderWindow window(
         sf::VideoMode({ SCREEN_W, SCREEN_H }),
-        "Block Buster Test"
+        "Block Buster"
     );
     window.setFramerateLimit(60);   // at most 60 turns per second
-
+    backgroundLoaded = backgroundTexture.loadFromFile("background.png");
+    if (backgroundLoaded)
+    {
+        cout << "Background loaded successfully!" << endl;
+    }
+    else
+    {
+        cout << "Background NOT found!" << endl;
+    }
     // Try to load a font (only needed for the error message)
     fontLoaded = font.openFromFile("C:/Windows/Fonts/arial.ttf");
 
