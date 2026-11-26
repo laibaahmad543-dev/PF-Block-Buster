@@ -739,15 +739,57 @@ void saveGame()
     fout.close();
 }
 
+// loads savegame.txt back into the game
+// returns false if theres no saved game (no file, empty, or broken)
 bool loadGame()
 {
-    // TODO
-    return false;
+    ifstream fin(SAVE_FILE);
+    if (!fin)
+        return false;   // no file
+
+    // read into temp variables first so a broken file doesnt mess up the game
+    int newScore, newLives;
+    int newBricks[ROWS][COLS];
+
+    fin >> newScore >> newLives;
+    if (fin.fail())
+        return false;   // file is empty (last game ended)
+
+    for (int r = 0; r < ROWS; r++)
+    {
+        for (int c = 0; c < COLS; c++)
+        {
+            fin >> newBricks[r][c];
+            if (fin.fail())
+                return false;   // file cut short
+        }
+    }
+    fin.close();
+
+    // file was fine so now copy it into the real game
+    score = newScore;
+    lives = newLives;
+    for (int r = 0; r < ROWS; r++)
+        for (int c = 0; c < COLS; c++)
+            bricks[r][c] = newBricks[r][c];
+
+    levelLoaded = true;   // so the bricks get drawn
+
+    // paddle back in the middle, ball waits on it for space
+    paddleX = (SCREEN_W - PADDLE_W) / 2.0f;
+    ballLaunched = false;
+    dx = 0;
+    dy = 0;
+
+    return true;
 }
 
+// empties the save file when a game ends so it cant be continued
+// (opening with ofstream and closing it straight away makes it empty)
 void clearSave()
 {
-    // TODO
+    ofstream fout(SAVE_FILE);
+    fout.close();
 }
 
 
