@@ -3,6 +3,8 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <cstdlib>
+#include <ctime>
 using namespace std;
 
 //  CONSTANTS 
@@ -67,7 +69,7 @@ bool fontLoaded = false;         // true if the font was found
 sf::Texture backgroundTexture;
 bool backgroundLoaded = false;
 
-//  FUNCTION DECLARATIONS 
+// ================= FUNCTION DECLARATIONS =================
 // Maryam's FUNCTIONS
 void loadLevel();
 void drawBricks(sf::RenderWindow& window);
@@ -80,6 +82,8 @@ void movePaddle(int direction);
 void launchBall();
 void moveBall();
 void bounceOnPaddle();
+void checkLose();
+void checkWin();
 
 // SAKAINAH'S FUNCTIONS
 bool hitBricks();
@@ -294,10 +298,19 @@ void handleInput()
 
 void updateGame()
 {
-    if (gameState == PLAYING && ballLaunched)
+    if (gameState == PLAYING)
     {
-        moveBall();
-        bounceOnPaddle();
+        if (ballLaunched)
+        {
+            moveBall();
+            bounceOnPaddle();
+            checkLose();
+        }
+
+        if (gameState == PLAYING)
+        {
+            checkWin();
+        }
     }
 }
 
@@ -334,7 +347,8 @@ void drawGame(sf::RenderWindow& window)
     {
     case MENU:
     {
-        drawCenteredText(window, "BLOCK BUSTER", 180, 48);
+        drawCenteredText(window, "Block Buster", 180, 56,
+            sf::Color(255, 245, 230));
 
         // The three options in order. The chosen one is yellow with arrows.
         string options[3] = { "New Game", "Continue", "Exit" };
@@ -361,10 +375,35 @@ void drawGame(sf::RenderWindow& window)
         drawCenteredText(window, "Score: " + to_string(score) + "     Lives: " + to_string(lives), 10, 22);
 
         // Paddle
-        sf::RectangleShape paddle(sf::Vector2f((float)PADDLE_W, (float)PADDLE_H));
-        paddle.setPosition(sf::Vector2f(paddleX, 650.f));
-        paddle.setFillColor(sf::Color::Cyan);
+        // Rounded silver paddle
+        sf::Color silver(210, 205, 210);
+
+        sf::RectangleShape paddle({
+            (float)(PADDLE_W - PADDLE_H),
+            (float)PADDLE_H
+            });
+
+        paddle.setPosition({ paddleX + 7.f, 650.f });
+        paddle.setFillColor(silver);
+
+        sf::CircleShape leftEnd(7.f);
+        leftEnd.setPosition({ paddleX, 650.f });
+        leftEnd.setFillColor(silver);
+
+        sf::CircleShape rightEnd(7.f);
+        rightEnd.setPosition({ paddleX + 86.f, 650.f });
+        rightEnd.setFillColor(silver);
+
         window.draw(paddle);
+        window.draw(leftEnd);
+        window.draw(rightEnd);
+
+        // Glossy highlight
+        sf::RectangleShape shine({ 80.f, 2.f });
+        shine.setPosition({ paddleX + 10.f, 652.f });
+        shine.setFillColor(sf::Color::White);
+
+        window.draw(shine);
 
         // Ball: on the paddle until launched, then at ballX, ballY
         sf::CircleShape ball(BALL_SIZE / 2.0f);
@@ -374,6 +413,28 @@ void drawGame(sf::RenderWindow& window)
         else
             ball.setPosition(sf::Vector2f(paddleX + PADDLE_W / 2.0f - BALL_SIZE / 2.0f,
                 650.f - BALL_SIZE));
+        // Outer glow
+        sf::CircleShape glow(12.f);
+        glow.setPosition({
+            ball.getPosition().x - 6.f,
+            ball.getPosition().y - 6.f
+            });
+
+        glow.setFillColor(sf::Color(255, 220, 200, 30));
+        window.draw(glow);
+
+        // Inner glow
+        sf::CircleShape innerGlow(9.f);
+        innerGlow.setPosition({
+            ball.getPosition().x - 3.f,
+            ball.getPosition().y - 3.f
+            });
+
+        innerGlow.setFillColor(sf::Color(255, 220, 200, 70));
+        window.draw(innerGlow);
+
+        // Actual ball
+        ball.setFillColor(sf::Color::White);
         window.draw(ball);
         break;
     }
@@ -417,36 +478,48 @@ void movePaddle(int direction)
 
 void launchBall()
 {
-    ballX = paddleX + PADDLE_W / 2.0f - BALL_SIZE / 2.0f;
-    ballY = 650.0f - BALL_SIZE;
+    ballX = paddleX + 44;
+    ballY = 638;
 
-    dx = 3.0f;
-    dy = -4.0f;
+    dy = -5;
+
+    if (rand() % 2 == 0)
+    {
+        dx = 3;
+    }
+    else
+    {
+        dx = -3;
+    }
 }
 void moveBall()
 {
+    // Horizontal movement
     ballX += dx;
+
+    // Left and right wall collision
+    if (ballX < 0 || ballX + BALL_SIZE > SCREEN_W)
+    {
+        ballX -= dx;
+        dx = -dx;
+    }
+    else
+    {
+        checkBricksAfterXStep();
+    }
+
+    // Vertical movement
     ballY += dy;
 
-
-    if (ballX + BALL_SIZE >= SCREEN_W && dx > 0)
+    // Top wall collision
+    if (ballY < HUD_H)
     {
-        ballX = SCREEN_W - BALL_SIZE;
-        dx = -dx;
-    }
-
-    // Left wall
-    if (ballX <= 0 && dx < 0)
-    {
-        ballX = 0;
-        dx = -dx;
-    }
-
-    // Top wall
-    if (ballY <= HUD_H && dy < 0)
-    {
-        ballY = HUD_H;
+        ballY -= dy;
         dy = -dy;
+    }
+    else
+    {
+        checkBricksAfterYStep();
     }
 }
 
@@ -454,35 +527,88 @@ void moveBall()
 void bounceOnPaddle()
 {
     if (dy > 0 &&
-        ballY + BALL_SIZE >= 650 &&
-        ballY + BALL_SIZE - dy <= 650 &&
-        ballX + BALL_SIZE >= paddleX &&
-        ballX <= paddleX + PADDLE_W)
+        ballX + BALL_SIZE > paddleX &&
+        ballX < paddleX + PADDLE_W &&
+        ballY + BALL_SIZE > 650 &&
+        ballY < 650 + PADDLE_H)
     {
-        ballY = 650 - BALL_SIZE;
-        dy = -dy;
+        ballY = 638;
+        dy = -5;
 
-        float hitPosition = ballX + BALL_SIZE / 2.0f - paddleX;
+        int part = (int)((ballX + 6 - paddleX) * 4 / PADDLE_W);
 
-        if (hitPosition < PADDLE_W / 4.0f)
+        if (part < 0)
         {
-            dx = -5.0f;
+            part = 0;
         }
-        else if (hitPosition < PADDLE_W / 2.0f)
+
+        if (part > 3)
         {
-            dx = -2.0f;
+            part = 3;
         }
-        else if (hitPosition < 3.0f * PADDLE_W / 4.0f)
+
+        if (part == 0)
         {
-            dx = 2.0f;
+            dx = -6;
+        }
+        else if (part == 1)
+        {
+            dx = -3;
+        }
+        else if (part == 2)
+        {
+            dx = 3;
         }
         else
         {
-            dx = 5.0f;
+            dx = 6;
         }
     }
 }
 
+
+void checkWin()
+{
+    int count = 0;
+
+    for (int i = 0; i < ROWS; i++)
+    {
+        for (int j = 0; j < COLS; j++)
+        {
+            if (bricks[i][j] != 0)
+            {
+                count++;
+            }
+        }
+    }
+
+    if (count == 0 && levelLoaded)
+    {
+        gameState = GAME_OVER;
+        ballLaunched = false;
+    }
+}
+
+void checkLose()
+{
+    if (ballLaunched && ballY > SCREEN_H)
+    {
+        lives--;
+
+        ballLaunched = false;
+
+        ballX = paddleX + 44;
+        ballY = 638;
+
+        dx = 0;
+        dy = 0;
+
+        if (lives == 0)
+        {
+            gameState = GAME_OVER;
+        }
+    }
+}
 // SAKAINAH
 // FEATURE 5: BREAKING BRICKS 
 const int ROW_SPACING = BRICK_H + BRICK_GAP;               // 20 + 5 = 25 pixels per row
@@ -577,16 +703,19 @@ void checkBricksAfterYStep()
 }
 
 // FEATURE 8: SAVE AND CONTINUE
+
 const char SAVE_FILE[] = "savegame.txt";
 
 // saves score, lives and all the bricks to savegame.txt
 // paddle and ball dont get saved
+
 void saveGame()
 {
     ofstream fout(SAVE_FILE);
+
     if (!fout)
     {
-		return;   // could not open the file, but no crash
+        return;   // could not open the file, but no crash
     }
 
     fout << score << " " << lives << "\n";   // first line
@@ -597,11 +726,13 @@ void saveGame()
         for (int c = 0; c < COLS; c++)
         {
             fout << bricks[r][c];
+
             if (c < COLS - 1)
             {
                 fout << " ";   // no space after the last one
             }
         }
+
         fout << "\n";
     }
 
@@ -622,25 +753,18 @@ void clearSave()
 
 int main()
 {
+    srand((unsigned int)time(0));
 
-
-    // Making window: 600 wide, 700 tall, with a title
     sf::RenderWindow window(
         sf::VideoMode({ SCREEN_W, SCREEN_H }),
         "Block Buster"
     );
-    window.setFramerateLimit(60);   // at most 60 turns per second
+
+    window.setFramerateLimit(60);
+
     backgroundLoaded = backgroundTexture.loadFromFile("background.png");
-    if (backgroundLoaded)
-    {
-        cout << "Background loaded successfully!" << endl;
-    }
-    else
-    {
-        cout << "Background NOT found!" << endl;
-    }
-    // Try to load a font (only needed for the error message)
-    fontLoaded = font.openFromFile("C:/Windows/Fonts/arial.ttf");
+
+    fontLoaded = font.openFromFile("gamefont.ttf");
 
     loadLevel();
 
