@@ -78,6 +78,21 @@ bool fontLoaded = false;         // true if the font was found
 
 sf::Texture backgroundTexture;
 bool backgroundLoaded = false;
+// POWER-UPS (bonus)
+const int POWERUP_W = 24;
+const int POWERUP_H = 24;
+const int POWERUP_SPEED = 3;
+const int WIDE_PADDLE_W = 150;
+const int WIDE_FRAMES = 600;      // 10 seconds at 60 fps
+const int POWER_WIDE = 0;
+const int POWER_LIFE = 1;
+
+bool powerUpActive = false;       // only one power-up at a time
+float powerUpX = 0;
+float powerUpY = 0;
+int powerUpType = POWER_WIDE;
+int paddleW = PADDLE_W;           // current paddle width
+int wideTimer = 0;                // frames left of the wide paddle
 
 // ================= FUNCTION DECLARATIONS =================
 // Maryam's FUNCTIONS
@@ -102,12 +117,25 @@ void checkBricksAfterYStep();
 void saveGame();
 bool loadGame();
 void clearSave();
+// Maryam (bonus)
+void resetPowerUps();
+void movePowerUp();
+void drawPowerUp(sf::RenderWindow& window);
+
+// Laiba (bonus)
+void activateWidePaddle();
+void updateWideTimer();
+
+// Sakainah (bonus)
+void spawnPowerUp(int row, int col);
+void checkPowerUpCatch();
 
 // Maryam's FUNCTIONS 
 
 //  read level.txt into the bricks array
 void loadLevel()
 {
+    resetPowerUps();
     // Start with an empty board
     for (int r = 0; r < ROWS; r++)
         for (int c = 0; c < COLS; c++)
@@ -331,16 +359,18 @@ void updateGame()
 
         if (gameState == PLAYING)
         {
+            movePowerUp();
+            checkPowerUpCatch();    
+            updateWideTimer();      
             checkWin();
         }
 
         if (gameState == GAME_OVER)
         {
-            clearSave();   // finished game cannot be continued
+            clearSave();
         }
     }
 }
-
 // Draws one line of text, centred left to right, at height y
 void drawCenteredText(sf::RenderWindow& window, const string& words, float y,
     unsigned int size, sf::Color color = sf::Color::White)
@@ -402,14 +432,12 @@ void drawGame(sf::RenderWindow& window)
         drawCenteredText(window, "Score: " + to_string(score) + "     Lives: " + to_string(lives), 10, 22);
 
         // Paddle
-        // Rounded silver paddle
         sf::Color silver(210, 205, 210);
 
         sf::RectangleShape paddle({
-            (float)(PADDLE_W - PADDLE_H),
+            (float)(paddleW - PADDLE_H),
             (float)PADDLE_H
             });
-
         paddle.setPosition({ paddleX + 7.f, 650.f });
         paddle.setFillColor(silver);
 
@@ -418,19 +446,19 @@ void drawGame(sf::RenderWindow& window)
         leftEnd.setFillColor(silver);
 
         sf::CircleShape rightEnd(7.f);
-        rightEnd.setPosition({ paddleX + 86.f, 650.f });
+        rightEnd.setPosition({ paddleX + paddleW - 14.f, 650.f });
         rightEnd.setFillColor(silver);
 
         window.draw(paddle);
         window.draw(leftEnd);
         window.draw(rightEnd);
 
-        // Glossy highlight
-        sf::RectangleShape shine({ 80.f, 2.f });
+        sf::RectangleShape shine({ (float)(paddleW - 20), 2.f });
         shine.setPosition({ paddleX + 10.f, 652.f });
         shine.setFillColor(sf::Color::White);
-
         window.draw(shine);
+
+        drawPowerUp(window);
 
         // Ball: on the paddle until launched, then at ballX, ballY
         sf::CircleShape ball(BALL_SIZE / 2.0f);
@@ -438,7 +466,7 @@ void drawGame(sf::RenderWindow& window)
         if (ballLaunched)
             ball.setPosition(sf::Vector2f(ballX, ballY));
         else
-            ball.setPosition(sf::Vector2f(paddleX + PADDLE_W / 2.0f - BALL_SIZE / 2.0f,
+            ball.setPosition(sf::Vector2f(paddleX + paddleW / 2.0f - BALL_SIZE / 2.0f,
                 650.f - BALL_SIZE));
         // Outer glow
         sf::CircleShape glow(12.f);
@@ -818,6 +846,61 @@ void clearSave()
     ofstream fout(SAVE_FILE);
     fout.close();
 }
+// Maryam (bonus)
+// back to normal: no power-up, normal paddle
+void resetPowerUps()
+{
+    powerUpActive = false;
+    paddleW = PADDLE_W;
+    wideTimer = 0;
+}
+// the power-up falls 3 pixels per frame, gone if below the window
+void movePowerUp()
+{
+    if (!powerUpActive)
+        return;
+
+    powerUpY += POWERUP_SPEED;
+
+    if (powerUpY > SCREEN_H)
+        powerUpActive = false;
+}
+// draws a coloured box with W or +
+void drawPowerUp(sf::RenderWindow& window)
+{
+    if (!powerUpActive)
+        return;
+
+    sf::RectangleShape box({ (float)POWERUP_W, (float)POWERUP_H });
+    box.setPosition({ powerUpX, powerUpY });
+    box.setOutlineThickness(-2.f);
+    box.setOutlineColor(sf::Color::White);
+
+    if (powerUpType == POWER_WIDE)
+        box.setFillColor(sf::Color(0, 150, 255));
+    else
+        box.setFillColor(sf::Color(0, 180, 60));
+
+    window.draw(box);
+
+    if (fontLoaded)
+    {
+        string letter = (powerUpType == POWER_WIDE) ? "W" : "+";
+        sf::Text text(font, letter, 18);
+        text.setFillColor(sf::Color::White);
+        float w = text.getLocalBounds().size.x;
+        text.setPosition({ powerUpX + (POWERUP_W - w) / 2.0f, powerUpY });
+        window.draw(text);
+    }
+
+}
+// Laiba (bonus)
+void activateWidePaddle();
+void updateWideTimer();
+// Sakainah (bonus)
+void spawnPowerUp(int row, int col);
+void checkPowerUpCatch();
+
 int main()
 {
     srand((unsigned int)time(0));
@@ -828,6 +911,7 @@ int main()
     );
 
     window.setFramerateLimit(60);
+    window.setKeyRepeatEnabled(false);   // a held key counts as one press
 
     backgroundLoaded = backgroundTexture.loadFromFile("background.png");
 
