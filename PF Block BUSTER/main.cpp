@@ -880,7 +880,7 @@ bool loadGame()
             bricks[r][c] = newBricks[r][c];
 
     levelLoaded = true;   // so the bricks get drawn
-
+    resetPowerUps();   // normal paddle, no power-up falling
     // paddle back in the middle, ball waits on it for space
     paddleX = (SCREEN_W - PADDLE_W) / 2.0f;
     ballLaunched = false;
@@ -945,9 +945,7 @@ void drawPowerUp(sf::RenderWindow& window)
     }
 
 }
-// Laiba (bonus)
-void activateWidePaddle();
-void updateWideTimer();
+
 // Sakainah (bonus)
 // when a brick breaks theres a 1 in 5 chance a power-up falls from it
 // only one can be on the screen at a time
@@ -971,7 +969,6 @@ void spawnPowerUp(int row, int col)
     else
         powerUpType = POWER_LIFE;
 }
-void checkPowerUpCatch();
 
 int main()
 {
