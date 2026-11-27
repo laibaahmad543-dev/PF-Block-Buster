@@ -520,9 +520,9 @@ void movePaddle(int direction)
         paddleX -= PADDLE_SPEED;
     }
 
-    if (paddleX > SCREEN_W - PADDLE_W)
+    if (paddleX > SCREEN_W - paddleW)
     {
-        paddleX = SCREEN_W - PADDLE_W;
+        paddleX = SCREEN_W - paddleW;
     }
 
     if (paddleX < 0)
@@ -533,7 +533,7 @@ void movePaddle(int direction)
 
 void launchBall()
 {
-    ballX = paddleX + 44;
+    ballX = paddleX + (paddleW - BALL_SIZE) / 2.0f;
     ballY = 638;
 
     dy = -5;
@@ -583,14 +583,14 @@ void bounceOnPaddle()
 {
     if (dy > 0 &&
         ballX + BALL_SIZE > paddleX &&
-        ballX < paddleX + PADDLE_W &&
+        ballX < paddleX + paddleW &&
         ballY + BALL_SIZE > 650 &&
         ballY < 650 + PADDLE_H)
     {
         ballY = 638;
         dy = -5;
 
-        int part = (int)((ballX + 6 - paddleX) * 4 / PADDLE_W);
+        int part = (int)((ballX + 6 - paddleX) * 4 / paddleW);
 
         if (part < 0)
         {
@@ -652,7 +652,7 @@ void checkLose()
 
         ballLaunched = false;
 
-        ballX = paddleX + 44;
+        ballX = paddleX + (paddleW - BALL_SIZE) / 2.0f;
         ballY = 638;
 
         dx = 0;
@@ -661,6 +661,54 @@ void checkLose()
         if (lives == 0)
         {
             gameState = GAME_OVER;
+        }
+    }
+}
+
+// Laiba (bonus)
+void activateWidePaddle()
+{
+    paddleW = WIDE_PADDLE_W;
+    wideTimer = WIDE_FRAMES;
+
+    if (paddleX + paddleW > SCREEN_W)
+    {
+        paddleX = SCREEN_W - paddleW;
+    }
+}
+
+void updateWideTimer()
+{
+    if (wideTimer > 0)
+    {
+        wideTimer--;
+
+        if (wideTimer == 0)
+        {
+            paddleW = PADDLE_W;
+        }
+    }
+}
+
+void checkPowerUpCatch()
+{
+    if (powerUpActive)
+    {
+        if (powerUpX + POWERUP_W > paddleX &&
+            powerUpX < paddleX + paddleW &&
+            powerUpY + POWERUP_H > 650 &&
+            powerUpY < 650 + PADDLE_H)
+        {
+            if (powerUpType == POWER_WIDE)
+            {
+                activateWidePaddle();
+            }
+            else if (powerUpType == POWER_LIFE)
+            {
+                lives++;
+            }
+
+            powerUpActive = false;
         }
     }
 }
