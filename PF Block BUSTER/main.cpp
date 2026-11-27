@@ -30,6 +30,16 @@ const int MENU = 0;
 const int PLAYING = 1;
 const int GAME_OVER = 2;
 
+
+// KEYS PRESSED ONCE (filled in main's event loop)
+const int NO_KEY = 0;
+const int KEY_UP = 1;
+const int KEY_DOWN = 2;
+const int KEY_ENTER = 3;
+const int KEY_ESCAPE = 4;
+const int LAUNCH = 5;
+
+int pressedKey = NO_KEY;   // the key pressed this frame
 // MAIN MENU OPTIONS (in this order on screen)
 const int MENU_NEW_GAME = 0;
 const int MENU_CONTINUE = 1;
@@ -138,9 +148,18 @@ void loadLevel()
         }
     }
 
+    // File had fewer than 80 numbers
+    if (fin.fail())
+    {
+        levelError = "Error: level.txt is incomplete";
+        for (int r = 0; r < ROWS; r++)
+            for (int c = 0; c < COLS; c++)
+                bricks[r][c] = 0;
+        return;
+    }
+
     levelLoaded = true;
 }
-
 // FUNCTION  draw the bricks (or the error message)
 void drawBricks(sf::RenderWindow& window)
 {
@@ -201,48 +220,37 @@ void drawBricks(sf::RenderWindow& window)
 
 void handleInput()
 {
-    // "Just pressed" detection: one tap = one action, even though the
-    // loop runs 60 times per second
-    static bool enterWasDown = false;
-    static bool upWasDown = false;
-    static bool downWasDown = false;
-
-    bool enterDown = sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Enter);
-    bool upDown = sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Up);
-    bool downDown = sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Down);
-
-    bool enterJustPressed = enterDown && !enterWasDown;
-    bool upJustPressed = upDown && !upWasDown;
-    bool downJustPressed = downDown && !downWasDown;
-
-    enterWasDown = enterDown;
-    upWasDown = upDown;
-    downWasDown = downDown;
-
     switch (gameState)
     {
     case MENU:
         // Move the highlight up or down (wraps around)
-        if (upJustPressed)
+        if (pressedKey == KEY_UP)
         {
             menuChoice = (menuChoice + 2) % 3;
             menuMessage = "";
         }
-        if (downJustPressed)
+        if (pressedKey == KEY_DOWN)
         {
             menuChoice = (menuChoice + 1) % 3;
             menuMessage = "";
         }
 
-        if (enterJustPressed)
+        if (pressedKey == KEY_ENTER)
         {
             switch (menuChoice)
             {
             case MENU_NEW_GAME:
                 loadLevel();             // score 0, 3 lives, bricks from level.txt
-                ballLaunched = false;    // ball waits on the paddle
-                menuMessage = "";
-                gameState = PLAYING;
+                if (levelLoaded)
+                {
+                    ballLaunched = false;    // ball waits on the paddle
+                    menuMessage = "";
+                    gameState = PLAYING;
+                }
+                else
+                {
+                    menuMessage = levelError;   // stay on menu, show the error
+                }
                 break;
 
             case MENU_CONTINUE:
@@ -266,6 +274,17 @@ void handleInput()
         break;
 
     case PLAYING:
+        // Escape: save and go back to the menu
+        if (pressedKey == KEY_ESCAPE)
+        {
+            saveGame();
+            menuChoice = MENU_NEW_GAME;
+            menuMessage = "";
+            gameState = MENU;
+            break;
+        }
+
+        // Held keys: these stay as isKeyPressed
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Left) ||
             sf::Keyboard::isKeyPressed(sf::Keyboard::Key::A))
         {
@@ -278,7 +297,8 @@ void handleInput()
             movePaddle(1);
         }
 
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Space) && !ballLaunched)
+        // Once-per-press key
+        if (pressedKey == LAUNCH && !ballLaunched)
         {
             launchBall();
             ballLaunched = true;
@@ -286,7 +306,7 @@ void handleInput()
         break;
 
     case GAME_OVER:
-        if (enterJustPressed)
+        if (pressedKey == KEY_ENTER)
         {
             menuChoice = MENU_NEW_GAME;
             menuMessage = "";
@@ -294,6 +314,8 @@ void handleInput()
         }
         break;
     }
+
+    pressedKey = NO_KEY;   // clear it so one press = one action
 }
 
 void updateGame()
@@ -310,6 +332,11 @@ void updateGame()
         if (gameState == PLAYING)
         {
             checkWin();
+        }
+
+        if (gameState == GAME_OVER)
+        {
+            clearSave();   // finished game cannot be continued
         }
     }
 }
@@ -791,8 +818,6 @@ void clearSave()
     ofstream fout(SAVE_FILE);
     fout.close();
 }
-
-
 int main()
 {
     srand((unsigned int)time(0));
@@ -813,13 +838,25 @@ int main()
     // The game loop: repeats until the window is closed
     while (window.isOpen())
     {
-
         while (const std::optional event = window.pollEvent())
         {
-            // if X button is typed.
+            // if X button is clicked
             if (event->is<sf::Event::Closed>())
             {
-                window.close();   //close the window
+                window.close();
+            }
+            else if (const auto* key = event->getIf<sf::Event::KeyPressed>())
+            {
+                if (key->code == sf::Keyboard::Key::Space)
+                    pressedKey = LAUNCH;
+                else if (key->code == sf::Keyboard::Key::Enter)
+                    pressedKey = KEY_ENTER;
+                else if (key->code == sf::Keyboard::Key::Escape)
+                    pressedKey = KEY_ESCAPE;
+                else if (key->code == sf::Keyboard::Key::Up)
+                    pressedKey = KEY_UP;
+                else if (key->code == sf::Keyboard::Key::Down)
+                    pressedKey = KEY_DOWN;
             }
         }
 
