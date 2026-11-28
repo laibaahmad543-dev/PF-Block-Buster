@@ -65,10 +65,10 @@ string menuMessage = "";          // small message on the menu, e.g. "No saved g
 bool exitRequested = false;       // becomes true when Exit is chosen
 
 sf::Color colors[4] = {
-    sf::Color(25, 25, 45),   // 0: no brick
-    sf::Color::Green,        // 1: one hit left
-    sf::Color::Yellow,       // 2: two hits left
-    sf::Color::Red           // 3: three hits left
+    sf::Color(25, 25, 45),   // 0 no brick
+    sf::Color::Green,        // 1 one hit left
+    sf::Color::Yellow,       // 2 two hits left
+    sf::Color::Red           // 3 three hits left
 };
 
 bool levelLoaded = false;         // true if level.txt was read correctly
@@ -94,7 +94,7 @@ int powerUpType = POWER_WIDE;
 int paddleW = PADDLE_W;           // current paddle width
 int wideTimer = 0;                // frames left of the wide paddle
 
-// ================= FUNCTION DECLARATIONS =================
+//  FUNCTION DECLARATIONS 
 // Maryam's FUNCTIONS
 void loadLevel();
 void drawBricks(sf::RenderWindow& window);
@@ -348,28 +348,38 @@ void handleInput()
 
 void updateGame()
 {
-    if (gameState == PLAYING)
+    // Only run game logic based on the current state
+    switch (gameState)
     {
+    case PLAYING:
+        // Only move the ball and check collisions after it has been launched
         if (ballLaunched)
         {
-            moveBall();
-            bounceOnPaddle();
-            checkLose();
+            moveBall();         // Update the ball's position
+            bounceOnPaddle();   // Bounce the ball if it hits the paddle
+            checkLose();        
         }
 
+        
         if (gameState == PLAYING)
         {
-            movePowerUp();
-            checkPowerUpCatch();    
-            updateWideTimer();      
-            checkWin();
+            movePowerUp();          // Move any falling power-up
+            checkPowerUpCatch();    // Check if the paddle caught the power-up
+            updateWideTimer();      // Count down the widepaddle power-up timer
+            checkWin();             // Check if all the bricks are destroyed
         }
-
-        if (gameState == GAME_OVER)
+        // The player lost this frame, so the save is cleared once
+        else if (gameState == GAME_OVER)
         {
-            clearSave();
+            clearSave();            // Delete the saved game data
         }
+        break;
+
+       
+    default:
+        break;
     }
+
 }
 // Draws one line of text, centred left to right, at height y
 void drawCenteredText(sf::RenderWindow& window, const string& words, float y,
