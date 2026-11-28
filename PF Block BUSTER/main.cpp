@@ -575,7 +575,7 @@ void drawGame(sf::RenderWindow& window)
 
 // LAIBA 
 void movePaddle(int direction) 
-{
+{ // moving the paddle left and right only 
     if (direction == 1)
     {
         paddleX += PADDLE_SPEED;
@@ -584,8 +584,8 @@ void movePaddle(int direction)
     {
         paddleX -= PADDLE_SPEED;
     }
-
-    if (paddleX > SCREEN_W - paddleW) // makes sure the paddle does not go out of the window 
+    // makes sure the paddle does not go out of the window 
+    if (paddleX > SCREEN_W - paddleW) 
     {
         paddleX = SCREEN_W - paddleW;
     }
@@ -702,10 +702,12 @@ void checkWin()
 {
     int count = 0;
 
+    // Traverse the entire 2D bricks array
     for (int i = 0; i < ROWS; i++)
     {
         for (int j = 0; j < COLS; j++)
         {
+            // A non-zero value means the brick is not destroyed yet
             if (bricks[i][j] != 0)
             {
                 count++;
@@ -713,10 +715,12 @@ void checkWin()
         }
     }
 
+    // The player wins when no bricks remain
+    // Check levelLoaded to prevent a false win if the file failed to load
     if (count == 0 && levelLoaded)
     {
         gameState = GAME_OVER;
-        ballLaunched = false;
+        ballLaunched = false;  // Stop the ball's movement
     }
 }
 
@@ -745,9 +749,13 @@ void checkLose()
 // Laiba (bonus)
 void activateWidePaddle()
 {
+    // Increase the paddle width to 150 pixels
     paddleW = WIDE_PADDLE_W;
+
+    // Activate the wide paddle for 600 frames (10 seconds)
     wideTimer = WIDE_FRAMES;
 
+    // Prevent the expanded paddle from going outside the window
     if (paddleX + paddleW > SCREEN_W)
     {
         paddleX = SCREEN_W - paddleW;
@@ -756,10 +764,13 @@ void activateWidePaddle()
 
 void updateWideTimer()
 {
+    // Only count down when the wide paddle is active
     if (wideTimer > 0)
     {
+        // Decrease the remaining duration by one every frame
         wideTimer--;
 
+        // Restore the original paddle width when the timer expires
         if (wideTimer == 0)
         {
             paddleW = PADDLE_W;
@@ -769,22 +780,29 @@ void updateWideTimer()
 
 void checkPowerUpCatch()
 {
+    // Only check for collision if a power-up is falling
     if (powerUpActive)
     {
+        // Check horizontal and vertical overlap between
+        // the falling power-up and the paddle
         if (powerUpX + POWERUP_W > paddleX &&
             powerUpX < paddleX + paddleW &&
             powerUpY + POWERUP_H > PADDLE_Y &&
             powerUpY < PADDLE_Y + PADDLE_H)
         {
+            // Apply the effect according to the power-up type
             if (powerUpType == POWER_WIDE)
             {
                 activateWidePaddle();
             }
             else if (powerUpType == POWER_LIFE)
             {
+                // Reward the player with an additional life
                 lives++;
             }
 
+            // Remove the power-up after it has been collected
+            // to prevent its effect from being applied repeatedly
             powerUpActive = false;
         }
     }
