@@ -750,7 +750,10 @@ void damageBrick(int r, int c)
     bricks[r][c] = bricks[r][c] - 1;
 
     if (bricks[r][c] == 0)
+    {
         score = score + POINTS_BREAK;   // this hit broke the brick
+        spawnPowerUp(r, c);             // maybe drop a power-up
+    }
     else
         score = score + POINTS_HIT;     // brick is still there
 }
@@ -887,7 +890,7 @@ bool loadGame()
             bricks[r][c] = newBricks[r][c];
 
     levelLoaded = true;   // so the bricks get drawn
-
+    resetPowerUps();   // normal paddle, no power-up falling
     // paddle back in the middle, ball waits on it for space
     paddleX = (SCREEN_W - PADDLE_W) / 2.0f;
     ballLaunched = false;
@@ -952,12 +955,30 @@ void drawPowerUp(sf::RenderWindow& window)
     }
 
 }
-// Laiba (bonus)
-void activateWidePaddle();
-void updateWideTimer();
+
 // Sakainah (bonus)
-void spawnPowerUp(int row, int col);
-void checkPowerUpCatch();
+// when a brick breaks theres a 1 in 5 chance a power-up falls from it
+// only one can be on the screen at a time
+void spawnPowerUp(int row, int col)
+{
+    if (powerUpActive)
+        return;   // one is already falling
+
+    if (rand() % 5 != 0)
+        return;   // no luck this time
+
+    powerUpActive = true;
+
+    // start in the middle of the brick that broke
+    powerUpX = col * BRICK_W + (BRICK_W - POWERUP_W) / 2.0f;
+    powerUpY = (float)(BRICKS_Y + row * ROW_SPACING);
+
+    // random type: wide paddle or extra life
+    if (rand() % 2 == 0)
+        powerUpType = POWER_WIDE;
+    else
+        powerUpType = POWER_LIFE;
+}
 
 int main()
 {
