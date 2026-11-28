@@ -47,4 +47,4 @@ A brick-breaking game developed in C++ using SFML 3.0.2 for our semester project
 
 ## Game Screenshot
 
-![Block Buster Gameplay](screenshot.png)
+![Block Buster Gameplay](PF%20Block%20BUSTER/screenshot.png)
