@@ -821,7 +821,7 @@ bool cornerToCell(float cx, float cy, int& row, int& col)
 {
     if (cy < BRICKS_Y || cy >= BRICKS_BOTTOM || cx < 0 || cx >= SCREEN_W)
         return false;
-
+    // each row is 25px (20 brick + 5 gap) starting at y = 100, each column is 60px
     row = ((int)cy - BRICKS_Y) / ROW_SPACING;   // integer division
     col = (int)cx / BRICK_W;
     return true;
@@ -847,6 +847,7 @@ void damageBrick(int r, int c)
 bool hitBricks()
 {
     // x and y of the 4 corners
+        // the ball is 12px so its last pixel is at +11, thats why its BALL_SIZE - 1
     float cx[4] = { ballX, ballX + BALL_SIZE - 1, ballX, ballX + BALL_SIZE - 1 };
     float cy[4] = { ballY, ballY, ballY + BALL_SIZE - 1, ballY + BALL_SIZE - 1 };
 
@@ -874,7 +875,7 @@ bool hitBricks()
         if (same)
             continue;
 
-        hitR[count] = r;
+        hitR[count] = r; // new brick, remember it so another corner doesnt hit it again
         hitC[count] = c;
         count++;
 
@@ -886,7 +887,7 @@ bool hitBricks()
 // after x move - if it hit a brick go back and bounce
 void checkBricksAfterXStep()
 {
-    if (hitBricks())
+    if (hitBricks())    // step back out of the brick, then reverse left/right
     {
         ballX -= dx;
         dx = -dx;
@@ -896,7 +897,7 @@ void checkBricksAfterXStep()
 // after y move - same thing but up/down
 void checkBricksAfterYStep()
 {
-    if (hitBricks())
+    if (hitBricks())   // step back out of the brick, then reverse up/down
     {
         ballY -= dy;
         dy = -dy;
@@ -1049,7 +1050,7 @@ void spawnPowerUp(int row, int col)
     if (powerUpActive)
         return;   // one is already falling
 
-    if (rand() % 5 != 0)
+    if (rand() % 5 != 0)     // rand() % 5 gives 0 to 4, so it's 0 one time in five
         return;   // no luck this time
 
     powerUpActive = true;
