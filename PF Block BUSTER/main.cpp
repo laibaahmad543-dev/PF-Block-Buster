@@ -25,6 +25,12 @@ const int PADDLE_SPEED = 8;
 const int BALL_SIZE = 12;
 const int HUD_H = 50;
 
+const int PADDLE_Y = 650;
+const int BALL_SPEED_Y = 5;
+const int BALL_SPEED_SLOW = 3;
+const int BALL_SPEED_FAST = 6;
+const int PADDLE_SECTIONS = 4;
+
 // GAME STATES
 const int MENU = 0;
 const int PLAYING = 1;
@@ -290,7 +296,7 @@ void handleInput()
                 }
                 else
                 {
-                    menuMessage = "No saved game found";
+                    menuMessage = "No saved game";
                 }
                 break;
 
@@ -398,7 +404,9 @@ void drawCenteredText(sf::RenderWindow& window, const string& words, float y,
 
 void drawGame(sf::RenderWindow& window)
 {
-    window.clear(sf::Color::Black);   // wipe the old picture
+    window.clear(sf::Color::Black);
+
+    // Draw background
     if (backgroundLoaded)
     {
         sf::Sprite background(backgroundTexture);
@@ -410,6 +418,7 @@ void drawGame(sf::RenderWindow& window)
 
         window.draw(background);
     }
+
     switch (gameState)
     {
     case MENU:
@@ -417,20 +426,27 @@ void drawGame(sf::RenderWindow& window)
         drawCenteredText(window, "Block Buster", 180, 56,
             sf::Color(255, 245, 230));
 
-        // The three options in order. The chosen one is yellow with arrows.
+        // Main menu options
         string options[3] = { "New Game", "Continue", "Exit" };
+
         for (int i = 0; i < 3; i++)
         {
             if (i == menuChoice)
-                drawCenteredText(window, "> " + options[i] + " <", 320.f + i * 50, 30, sf::Color::Yellow);
+                drawCenteredText(window, "> " + options[i] + " <",
+                    320.f + i * 50, 30, sf::Color::Yellow);
             else
-                drawCenteredText(window, options[i], 320.f + i * 50, 30);
+                drawCenteredText(window, options[i],
+                    320.f + i * 50, 30);
         }
 
-        drawCenteredText(window, "Up / Down to choose, Enter to select", 530, 18, sf::Color(160, 160, 160));
+        drawCenteredText(window,
+            "Up / Down to choose, Enter to select",
+            530, 18, sf::Color(160, 160, 160));
 
         if (menuMessage != "")
-            drawCenteredText(window, menuMessage, 580, 22, sf::Color::Red);
+            drawCenteredText(window, menuMessage,
+                580, 22, sf::Color::Red);
+
         break;
     }
 
@@ -438,58 +454,86 @@ void drawGame(sf::RenderWindow& window)
     {
         drawBricks(window);
 
-        // Score and lives at the top
-        drawCenteredText(window, "Score: " + to_string(score) + "     Lives: " + to_string(lives), 10, 22);
+        // Display score and lives
+        drawCenteredText(window,
+            "Score: " + to_string(score) +
+            "     Lives: " + to_string(lives), 10, 22);
 
-        // Paddle
+        // Rounded silver paddle
         sf::Color silver(210, 205, 210);
 
         sf::RectangleShape paddle({
             (float)(paddleW - PADDLE_H),
             (float)PADDLE_H
             });
-        paddle.setPosition({ paddleX + 7.f, 650.f });
+
+        paddle.setPosition({
+            paddleX + PADDLE_H / 2.0f,
+            (float)PADDLE_Y
+            });
+
         paddle.setFillColor(silver);
 
-        sf::CircleShape leftEnd(7.f);
-        leftEnd.setPosition({ paddleX, 650.f });
+        // Left rounded end
+        sf::CircleShape leftEnd(PADDLE_H / 2.0f);
+
+        leftEnd.setPosition({
+            paddleX,
+            (float)PADDLE_Y
+            });
+
         leftEnd.setFillColor(silver);
 
-        sf::CircleShape rightEnd(7.f);
-        rightEnd.setPosition({ paddleX + paddleW - 14.f, 650.f });
+        // Right rounded end
+        sf::CircleShape rightEnd(PADDLE_H / 2.0f);
+
+        rightEnd.setPosition({
+            paddleX + paddleW - PADDLE_H,
+            (float)PADDLE_Y
+            });
+
         rightEnd.setFillColor(silver);
 
         window.draw(paddle);
         window.draw(leftEnd);
         window.draw(rightEnd);
 
-        sf::RectangleShape shine({ (float)(paddleW - 20), 2.f });
-        shine.setPosition({ paddleX + 10.f, 652.f });
+        // Glossy paddle highlight
+        sf::RectangleShape shine({
+            (float)(paddleW - 20), 2.f
+            });
+
+        shine.setPosition({
+            paddleX + 10.f,
+            PADDLE_Y + 2.f
+            });
+
         shine.setFillColor(sf::Color::White);
         window.draw(shine);
 
+        // Draw falling power-up
         drawPowerUp(window);
 
-        // Ball: on the paddle until launched, then at ballX, ballY
+        // Draw the ball
         sf::CircleShape ball(BALL_SIZE / 2.0f);
         ball.setFillColor(sf::Color::White);
-        if (ballLaunched)
-            ball.setPosition(sf::Vector2f(ballX, ballY));
-        else
-            ball.setPosition(sf::Vector2f(paddleX + paddleW / 2.0f - BALL_SIZE / 2.0f,
-                650.f - BALL_SIZE));
-        // Outer glow
-        sf::CircleShape glow(12.f);
-        glow.setPosition({
-            ball.getPosition().x - 6.f,
-            ball.getPosition().y - 6.f
-            });
 
-        glow.setFillColor(sf::Color(255, 220, 200, 30));
-        window.draw(glow);
+        if (ballLaunched)
+        {
+            ball.setPosition({ ballX, ballY });
+        }
+        else
+        {
+            // Keep the ball centred on the current paddle width
+            ball.setPosition({
+                paddleX + (paddleW - BALL_SIZE) / 2.0f,
+                (float)(PADDLE_Y - BALL_SIZE)
+                });
+        }
 
         // Inner glow
         sf::CircleShape innerGlow(9.f);
+
         innerGlow.setPosition({
             ball.getPosition().x - 3.f,
             ball.getPosition().y - 3.f
@@ -499,27 +543,38 @@ void drawGame(sf::RenderWindow& window)
         window.draw(innerGlow);
 
         // Actual ball
-        ball.setFillColor(sf::Color::White);
         window.draw(ball);
+
         break;
     }
 
     case GAME_OVER:
+    {
         if (lives > 0)
-            drawCenteredText(window, "YOU WIN!", 250, 48, sf::Color::Green);
+        {
+            drawCenteredText(window, "YOU WIN!",
+                250, 48, sf::Color::Green);
+        }
         else
-            drawCenteredText(window, "GAME OVER", 250, 48, sf::Color::Red);
+        {
+            drawCenteredText(window, "GAME OVER",
+                250, 48, sf::Color::Red);
+        }
 
-        drawCenteredText(window, "Final score: " + to_string(score), 330, 28);
+        drawCenteredText(window,
+            "Final score: " + to_string(score), 330, 28);
+
         drawCenteredText(window, "Press Enter", 400, 24);
+
         break;
     }
+    }
 
-    window.display();                 // show it on the screen
+    window.display();
 }
 
 // LAIBA 
-void movePaddle(int direction)
+void movePaddle(int direction) 
 {
     if (direction == 1)
     {
@@ -530,7 +585,7 @@ void movePaddle(int direction)
         paddleX -= PADDLE_SPEED;
     }
 
-    if (paddleX > SCREEN_W - paddleW)
+    if (paddleX > SCREEN_W - paddleW) // makes sure the paddle does not go out of the window 
     {
         paddleX = SCREEN_W - paddleW;
     }
@@ -543,18 +598,21 @@ void movePaddle(int direction)
 
 void launchBall()
 {
+    // Position the ball at the centre of the paddle
     ballX = paddleX + (paddleW - BALL_SIZE) / 2.0f;
-    ballY = 638;
+    ballY = PADDLE_Y - BALL_SIZE;
 
-    dy = -5;
+    // Launch the ball upwards
+    dy = -BALL_SPEED_Y;
 
+    // Randomly choose the initial horizontal direction
     if (rand() % 2 == 0)
     {
-        dx = 3;
+        dx = BALL_SPEED_SLOW;
     }
     else
     {
-        dx = -3;
+        dx = -BALL_SPEED_SLOW;
     }
 }
 void moveBall()
@@ -591,42 +649,50 @@ void moveBall()
 
 void bounceOnPaddle()
 {
+    // Check collision only when the ball is moving downwards
     if (dy > 0 &&
         ballX + BALL_SIZE > paddleX &&
         ballX < paddleX + paddleW &&
-        ballY + BALL_SIZE > 650 &&
-        ballY < 650 + PADDLE_H)
+        ballY + BALL_SIZE > PADDLE_Y &&
+        ballY < PADDLE_Y + PADDLE_H)
     {
-        ballY = 638;
-        dy = -5;
+        // Place the ball above the paddle and bounce upwards
+        ballY = PADDLE_Y - BALL_SIZE;
+        dy = -BALL_SPEED_Y;
 
-        int part = (int)((ballX + 6 - paddleX) * 4 / paddleW);
+        // Find the ball's centre relative to the paddle.
+        // Divide the current paddle width into four equal sections.
+        int part = (int)((ballX + BALL_SIZE / 2.0f - paddleX)
+            * PADDLE_SECTIONS / paddleW);
 
+        // Keep the section number within valid bounds
         if (part < 0)
         {
             part = 0;
         }
 
-        if (part > 3)
+        if (part >= PADDLE_SECTIONS)
         {
-            part = 3;
+            part = PADDLE_SECTIONS - 1;
         }
 
+        // Outer sections give faster horizontal movement.
+        // Inner sections give slower horizontal movement.
         if (part == 0)
         {
-            dx = -6;
+            dx = -BALL_SPEED_FAST;
         }
         else if (part == 1)
         {
-            dx = -3;
+            dx = -BALL_SPEED_SLOW;
         }
         else if (part == 2)
         {
-            dx = 3;
+            dx = BALL_SPEED_SLOW;
         }
         else
         {
-            dx = 6;
+            dx = BALL_SPEED_FAST;
         }
     }
 }
@@ -656,14 +722,16 @@ void checkWin()
 
 void checkLose()
 {
+    // Deduct a life when the ball falls below the window
     if (ballLaunched && ballY > SCREEN_H)
     {
         lives--;
 
         ballLaunched = false;
 
+        // Reset the ball onto the paddle without resetting bricks
         ballX = paddleX + (paddleW - BALL_SIZE) / 2.0f;
-        ballY = 638;
+        ballY = PADDLE_Y - BALL_SIZE;
 
         dx = 0;
         dy = 0;
@@ -674,7 +742,6 @@ void checkLose()
         }
     }
 }
-
 // Laiba (bonus)
 void activateWidePaddle()
 {
@@ -706,8 +773,8 @@ void checkPowerUpCatch()
     {
         if (powerUpX + POWERUP_W > paddleX &&
             powerUpX < paddleX + paddleW &&
-            powerUpY + POWERUP_H > 650 &&
-            powerUpY < 650 + PADDLE_H)
+            powerUpY + POWERUP_H > PADDLE_Y &&
+            powerUpY < PADDLE_Y + PADDLE_H)
         {
             if (powerUpType == POWER_WIDE)
             {
